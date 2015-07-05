@@ -1,4 +1,35 @@
 from maya import cmds
+from maya import OpenMayaUI
+from maya import OpenMaya
+
+
+class View(object):
+	def __init__(self):
+		super(View, self).__init__()
+		self.view = OpenMayaUI.M3dView.active3dView()
+		self.camera = OpenMaya.MDagPath()
+		self.view.getCamera(self.camera)
+
+	def camera(self):
+		if (self.camera.isValid()):
+			return self.camera.partialPathName()
+		return None
+
+	def size(self):
+		(_, _, width, height) = self.__geometry()
+		return (width, height)
+
+	def __geometry(self):
+		xu = OpenMaya.MScriptUtil()
+		yu = OpenMaya.MScriptUtil()
+		wu = OpenMaya.MScriptUtil()
+		hu = OpenMaya.MScriptUtil()
+		xp = xu.asUintPtr()
+		yp = yu.asUintPtr()
+		wp = wu.asUintPtr()
+		hp = hu.asUintPtr()
+		self.view.viewport(xp, yp, wp, hp)
+		return (xu.getUint(xp), yu.getUint(yp), wu.getUint(wp), hu.getUint(hp))
 
 
 class Camera(object):
@@ -10,6 +41,7 @@ class Camera(object):
 	ASPECT_V = "verticalFilmAperture"
 
 	def __init__(self, camera_name):
+		super(Camera, self).__init__()
 		self.name = camera_name
 
 	def __attr(self, attr_name):
@@ -71,6 +103,10 @@ class Camera(object):
 
 	def getZoom(self):
 		return self.get(Camera.PAN_ZOOM)
+
+
+def __getActiveViewCamera():
+	view = OpenMayaUI.M3dView.active3dView()
 
 
 def killExistenceWindow(window_name):
