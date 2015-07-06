@@ -16,20 +16,7 @@ class View(object):
 		return None
 
 	def size(self):
-		(_, _, width, height) = self.__geometry()
-		return (width, height)
-
-	def __geometry(self):
-		xu = OpenMaya.MScriptUtil()
-		yu = OpenMaya.MScriptUtil()
-		wu = OpenMaya.MScriptUtil()
-		hu = OpenMaya.MScriptUtil()
-		xp = xu.asUintPtr()
-		yp = yu.asUintPtr()
-		wp = wu.asUintPtr()
-		hp = hu.asUintPtr()
-		self.view.viewport(xp, yp, wp, hp)
-		return (xu.getUint(xp), yu.getUint(yp), wu.getUint(wp), hu.getUint(hp))
+		return (self.view.portWidth(), self.view.portHeight())
 
 
 class Camera(object):
