@@ -92,10 +92,6 @@ class Camera(object):
 		return self.get(Camera.PAN_ZOOM)
 
 
-def __getActiveViewCamera():
-	view = OpenMayaUI.M3dView.active3dView()
-
-
 def killExistenceWindow(window_name):
 	if cmds.window(window_name, q=1, ex=1):
 		cmds.deleteUI(window_name)
