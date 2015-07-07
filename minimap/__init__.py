@@ -1,5 +1,10 @@
+from . import model
 from . import ui
 
 
 def Run():
-    ui.Show()
+    model.getCamera()
+    model.UI = ui.Create()
+    if model.isValid():
+        model.UI.reset()
+        model.UI.show()

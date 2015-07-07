@@ -1,22 +1,45 @@
 from . import mayaFunction as func
 
 
-class Model(object):
-    def __init__(self):
-        super(Model, self).__init__()
-        self.view = None
-        self.camera = None
-        self.reload()
+CAMERA = None
+UI = None
+DRAW_SCALE = 0.125
+HORIZON_FIT = 2
+VERTICAL_FIT = 3
 
-    def reload(self):
-        self.view = func.View()
-        self.camera = func.Camera(self.view.camera())
 
-    def UI2Pan(self, h, v, z=1):
-        self.camera.setH(self.camera.horizonAspect() * h)
-        self.camera.setV(self.camera.verticalAspect() * v)
+def isValid():
+    if CAMERA and UI:
+        return True
+    return False
 
-    def pan2UI(self, ui):
-        ui.setH(self.camera.getH / self.camera.horizonAspect())
-        ui.setV(self.camera.getV / self.camera.verticalAspect())
-        
+
+def setUI(ui):
+    global UI
+    UI = ui
+
+
+def getCamera():
+    global CAMERA
+    cam_name = func.getCamera()
+    if cam_name:
+        CAMERA = func.Camera(cam_name)
+
+
+def getScreenSize(w, h):
+    ft = CAMERA.fitType()
+    ### only support horizon, vertical fit, currently 
+    if ft == HORIZON_FIT:
+        h = int(w / CAMERA.aspectH() * CAMERA.aspectV())
+    else:
+        w = int(h / CAMERA.aspectV() * CAMERA.aspectH())
+    return (w, h)
+    
+
+# def UI2Pan(h, v, z=1):
+#     CAMERA.setH(CAMERA.aspectH() * h)
+#     CAMERA.setV(CAMERA.aspectV() * v)
+
+# def pan2UI(self, ui):
+#     UI.setH(CAMERA.getH / CAMERA.aspectH())
+#     UI.setV(CAMERA.getV / CAMERA.aspectV())

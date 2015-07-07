@@ -1,8 +1,9 @@
 from maya import cmds
 from maya import OpenMayaUI
 from maya import OpenMaya
+import os
 
-
+## TODO
 class View(object):
     def __init__(self):
         super(View, self).__init__()
@@ -26,10 +27,18 @@ class Camera(object):
     PAN_ENABLE = "panZoomEnabled"
     ASPECT_H = "horizontalFilmAperture"
     ASPECT_V = "verticalFilmAperture"
+    IMAGE_H = "sizeX"
+    IMAGE_V = "sizeY"
+    IMAGE_PATH = "imageName"
+    IMAGE_PLANE_TYPE = "imagePlane"
+    IMAGE_FIT = "fit"
 
     def __init__(self, camera_name):
         super(Camera, self).__init__()
+        self.image_plane = None
+        self.image_path = None
         self.name = camera_name
+        self.getImagePlane()
 
     def __attr(self, attr_name):
         return "%s.%s" % (self.name, attr_name)
@@ -51,6 +60,20 @@ class Camera(object):
             cmds.warning("could not find the attribute : %s" % (attr_name))
             return False
         return True
+    
+    def getImagePlane(self):
+        cons = cmds.listConnections(self.name, s=1, d=0, 
+                                    type=Camera.IMAGE_PLANE_TYPE)
+        if cons != None:
+            self.image_plane = cons[0]
+            img = cmds.getAttr("%s.%s" % (self.image_plane, Camera.IMAGE_PATH))
+            if img and os.path.isfile(img):
+                self.image_path = img
+            else:
+                self.image_path = None
+        else:
+            self.image_plane = None
+            self.image_path = None
 
     def set(self, attr_name, value):
         attr = self.__attr(attr_name)
@@ -62,10 +85,14 @@ class Camera(object):
             return cmds.getAttr(self.__attr(attr_name))
         return None
 
-    def horizonAspect(self):
+    def aspectH(self):
+        if self.image_plane:
+            return cmds.getAttr("%s.%s" % (self.image_plane, Camera.IMAGE_H))
         return self.get(Camera.ASPECT_H)
 
-    def verticalAspect(self):
+    def aspectV(self):
+        if self.image_plane:
+            return cmds.getAttr("%s.%s" % (self.image_plane, Camera.IMAGE_V))
         return self.get(Camera.ASPECT_V)
 
     def checkPanEnable(self):
@@ -95,8 +122,26 @@ class Camera(object):
         self.setZoom(1.0)
         self.setV(0)
         self.setH(0)
+        
+    def fitType(self):
+        if self.image_plane:
+            return cmds.getAttr("%s.%s" % (self.image_plane, Camera.IMAGE_FIT))
 
 
 def killExistenceWindow(window_name):
     if cmds.window(window_name, q=1, ex=1):
         cmds.deleteUI(window_name)
+
+
+def getCamera():
+    sels = cmds.ls(sl=1)
+    if sels:
+        obj = sels[0]
+        if cmds.objectType(obj) == "transform":
+            shapes = cmds.listRelatives(obj, s=1)
+            if shapes:
+                obj = shapes[0]
+        if cmds.objectType(obj) == "camera":
+            return obj
+    cmds.warning("select a camera")
+    return None
