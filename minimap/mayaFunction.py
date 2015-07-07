@@ -53,13 +53,17 @@ class Camera(object):
         return True
 
     def __exists(self, attr_name):
-        if (cmds.objExists(self.name) == False):
+        if (self.exists() == False):
             cmds.waning("could not find camera : %s" % (self.name))
             return False
+        
         if (cmds.attributeQuery(attr_name, n=self.name, ex=1) == False):
             cmds.warning("could not find the attribute : %s" % (attr_name))
             return False
         return True
+    
+    def exists(self):
+        return cmds.objExists(self.name)
     
     def getImagePlane(self):
         cons = cmds.listConnections(self.name, s=1, d=0, 

@@ -27,6 +27,7 @@ class DrawWidget(QtGui.QLabel):
         self.frame_h = 100
         self.image_w = 0
         self.image_h = 0
+        self.zoom = 1
         self.clear()
         
     def paintEvent(self, evnt):
@@ -39,8 +40,16 @@ class DrawWidget(QtGui.QLabel):
             paint.drawImage(self.__imageGeometry(), self.image)
         ### draw rect
         paint.setPen(self.dot_line_pen)
-        ### rect geometry
+        ### draw rect
         paint.drawRect(*self.__rectGeometry())
+        ### draw line
+        paint.drawLine(self.rect_x - 5, self.rect_y, 
+                       self.rect_x + 5, self.rect_y)
+        paint.drawLine(self.rect_x, self.rect_y - 5, 
+                       self.rect_x, self.rect_y + 5)
+        model.UI2Pan((self.rect_x - self.rect_w / 2.0) / self.rect_w,
+                     (self.rect_y - self.rect_h / 2.0) / self.rect_h,
+                     self.zoom)
         paint.end()
         
     def __imageGeometry(self):
@@ -53,18 +62,31 @@ class DrawWidget(QtGui.QLabel):
         return QtCore.QRect(x, y, self.image_w, self.image_h)
         
     def __rectGeometry(self):
-        posx = self.rect_x - (self.rect_w / 2.0)
-        posy = self.rect_y - (self.rect_h / 2.0)
-        sizew = self.rect_w if self.rect_w != self.frame_w else self.rect_w - 1
-        sizeh = self.rect_h if self.rect_h != self.frame_h else self.rect_h - 1
+        ### position
+        posx = self.rect_x - (self.rect_w / 2.0 * self.zoom)
+        posy = self.rect_y - (self.rect_h / 2.0 * self.zoom)
+        ### rect size
+        w = self.rect_w * self.zoom
+        h = self.rect_h * self.zoom
+        ### if frame size and rect size are same then minus 1 pixel
+        sizew = w if abs(w - self.frame_w) > 0.1 else w - 1
+        sizeh = h if abs(h - self.frame_h) > 0.1 else h - 1
         return (posx, posy, sizew, sizeh)
         
     def mouseMoveEvent(self, evnt):
+        if self.pushed:
+            self.__moveRect(evnt)
+        
+    def __moveRect(self, evnt):
+        pos = evnt.pos()
+        self.rect_x = pos.x()
+        self.rect_y = pos.y()
         self.update()
         
     def mousePressEvent(self, evnt):
         if (evnt.button() == QtCore.Qt.MouseButton.LeftButton):
             self.pushed = True
+            self.__moveRect(evnt)
         #QtCore.Qt.MouseButton.RightButton
     
     def mouseReleaseEvent(self, evnt):
@@ -100,6 +122,11 @@ class DrawWidget(QtGui.QLabel):
         self.frame_w = w
         self.frame_h = h
         self.__setSize()
+        self.zoom = 1
+        self.update()
+    
+    def setZoom(self, zoom):
+        self.zoom = zoom
         self.update()
 
 
@@ -125,6 +152,13 @@ class MainWindow(QtGui.QMainWindow):
 
     def reset(self):
         self.draw_widget.reset()
+        
+    def setZoom(self, value):
+        self.draw_widget.setZoom(value)
+        
+    def closeEvent(self, evnt):
+        model.UI2Pan(0, 0, 1)
+        super(QtGui.QMainWindow, self).closeEvent(evnt)
 
 
 def wrapQt():

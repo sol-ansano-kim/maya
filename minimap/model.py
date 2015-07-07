@@ -25,7 +25,6 @@ def getCamera():
     if cam_name:
         CAMERA = func.Camera(cam_name)
 
-
 def getScreenSize(w, h):
     ft = CAMERA.fitType()
     ### only support horizon, vertical fit, currently 
@@ -36,9 +35,12 @@ def getScreenSize(w, h):
     return (w, h)
     
 
-# def UI2Pan(h, v, z=1):
-#     CAMERA.setH(CAMERA.aspectH() * h)
-#     CAMERA.setV(CAMERA.aspectV() * v)
+def UI2Pan(h, v, z):
+    if CAMERA and CAMERA.exists():
+        CAMERA.setH(h * CAMERA.aspectH())
+        CAMERA.setV(v * CAMERA.aspectV() * -1)
+        CAMERA.setZoom(z)
+    
 
 # def pan2UI(self, ui):
 #     UI.setH(CAMERA.getH / CAMERA.aspectH())
