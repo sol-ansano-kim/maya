@@ -19,7 +19,9 @@ class DrawWidget(QtGui.QLabel):
         super(DrawWidget, self).__init__()
         self.setObjectName("minimap_draw_widget")
         self.image = None
-        self.pushed = False
+        self.left_pushed = False
+        self.right_pushed = False
+        self.old_pos = None
         self.rect_x = 0
         self.rect_y = 0
         self.rect_w = 10
@@ -75,8 +77,20 @@ class DrawWidget(QtGui.QLabel):
         return (posx, posy, sizew, sizeh)
 
     def mouseMoveEvent(self, evnt):
-        if self.pushed:
+        if self.left_pushed:
             self.__moveRect(evnt)
+        elif self.right_pushed:
+            if self.old_pos:
+                self.__scaleRect(evnt)
+            self.old_pos = evnt.pos()
+
+    def __scaleRect(self, evnt):
+        moved = evnt.pos() - self.old_pos
+        self.old_pos = evnt.pos()
+        zoom = self.zoom + (moved.x() + moved.y()) * 0.001
+        zoom = zoom if zoom > 0 else 0.001
+        model.modifyZoom(zoom)
+        self.setZoom(zoom)
 
     def __moveRect(self, evnt):
         pos = evnt.pos()
@@ -86,12 +100,16 @@ class DrawWidget(QtGui.QLabel):
 
     def mousePressEvent(self, evnt):
         if (evnt.button() == QtCore.Qt.MouseButton.LeftButton):
-            self.pushed = True
+            self.left_pushed = True
             self.__moveRect(evnt)
-        #QtCore.Qt.MouseButton.RightButton
+        if (evnt.button() == QtCore.Qt.MouseButton.RightButton):
+            self.right_pushed = True
 
     def mouseReleaseEvent(self, evnt):
-        self.pushed = False
+        self.left_pushed = False
+        self.right_pushed = False
+        self.old_pos = None
+
 
     def __setSize(self):
         self.setFixedSize(self.frame_w, self.frame_h)
@@ -126,6 +144,9 @@ class DrawWidget(QtGui.QLabel):
         self.zoom = 1
         self.update()
 
+    def getZoom(self):
+        return self.zoom
+
     def setZoom(self, zoom):
         self.zoom = zoom
         self.update()
@@ -145,8 +166,11 @@ class MainWindow(QtGui.QMainWindow):
         self.setCentralWidget(central_widget)
         central_widget.setLayout(main_layout)
         ### draw widget
+        draw_layout = QtGui.QHBoxLayout()
+        draw_layout.setAlignment(QtCore.Qt.AlignCenter)
         self.draw_widget = DrawWidget()
-        main_layout.addWidget(self.draw_widget)
+        draw_layout.addWidget(self.draw_widget)
+        main_layout.addLayout(draw_layout)
         ### zoom widget
         zoom_layout = QtGui.QHBoxLayout()
         self.zoom_line = QtGui.QLineEdit("1.0")
@@ -167,10 +191,8 @@ class MainWindow(QtGui.QMainWindow):
         button_layout.addWidget(size_1_4)
         button_layout.addWidget(size_1_8)
         main_layout.addLayout(button_layout)
-        ### alignment
-        main_layout.setAlignment(QtCore.Qt.AlignCenter)
         ### signal
-        self.zoom_line.editingFinished.connect(self.slotZoomChanged)
+        self.zoom_line.textEdited.connect(self.slotZoomChanged)
         reset_button.clicked.connect(self.reset)
         size_1_2.clicked.connect(self.toggle_1_2)
         size_1_8.clicked.connect(self.toggle_1_8)
@@ -180,6 +202,7 @@ class MainWindow(QtGui.QMainWindow):
         txt = self.zoom_line.text()
         if RE_NUMBER.match(txt):
             value = float(txt)
+            value = value if value > 0 else 0.001
             self.setZoom(value)
             # a = 100 - value  # b = value / a  # c = a * 0.01
             # d = b * c  # e = c * 2 # print d + e

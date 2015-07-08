@@ -27,6 +27,7 @@ def getCamera():
     else:
         CAMERA = None
 
+
 def getScreenSize(w, h):
     ft = CAMERA.fitType()
     ### only support horizon, vertical fit, currently
@@ -43,6 +44,10 @@ def UI2Pan(h, v, z):
         CAMERA.setV(v * CAMERA.aspectV() * -1)
         CAMERA.setZoom(z)
 
+
+def modifyZoom(value):
+    if UI:
+        UI.zoom_line.setText(str(value))
 
 # def pan2UI(self, ui):
 #     UI.setH(CAMERA.getH / CAMERA.aspectH())
