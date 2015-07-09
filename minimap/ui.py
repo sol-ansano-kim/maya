@@ -229,7 +229,21 @@ class MainWindow(QtGui.QMainWindow):
 
 
 def wrapQt():
-    return shiboken.wrapInstance(long(OpenMayaUI.MQtUtil.mainWindow()), QtGui.QWidget)
+    parent = None
+    try:
+        parent = shiboken.wrapInstance(long(OpenMayaUI.MQtUtil.mainWindow()),
+                                       QtGui.QWidget)
+    except:
+        pass
+    ### i don`t like this way..
+    if parent == None:
+        RE_MAIN = re.compile("Autodesk Maya.*")
+        for wid in QtGui.QApplication.topLevelWidgets():
+            name = wid.windowTitle()
+            if RE_MAIN.match(name):
+                parent = wid
+                break
+    return parent
 
 
 def Create():
