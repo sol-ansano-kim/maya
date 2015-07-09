@@ -229,8 +229,7 @@ class MainWindow(QtGui.QMainWindow):
 
 
 def wrapQt():
-    return shiboken.wrapInstance(OpenMayaUI.MQtUtil_mainWindow(),
-                                 QtGui.QMainWindow)
+    return shiboken.wrapInstance(long(OpenMayaUI.MQtUtil.mainWindow()), QtGui.QWidget)
 
 
 def Create():
