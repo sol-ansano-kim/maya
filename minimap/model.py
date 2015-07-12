@@ -4,9 +4,14 @@ from . import mayaFunction as func
 CAMERA = None
 UI = None
 DRAW_SCALE = 0.25
+FILL_FIT = 0
+BEST_FIT = 1
 HORIZON_FIT = 2
 VERTICAL_FIT = 3
-
+TOSIZE_FIT = 4
+ZOOM_MIN = 1
+ZOOM_MAX = 200
+ZOOM_DEFAULT = 100
 
 def isValid():
     if CAMERA and UI:
@@ -30,11 +35,18 @@ def getCamera():
 
 def getScreenSize(w, h):
     ft = CAMERA.fitType()
-    ### only support horizon, vertical fit, currently
-    if ft == HORIZON_FIT:
-        h = int(w / CAMERA.aspectH() * CAMERA.aspectV())
-    else:
-        w = int(h / CAMERA.aspectV() * CAMERA.aspectH())
+    aspect_h = CAMERA.aspectH()
+    aspect_v = CAMERA.aspectV()
+
+    if ft == FILL_FIT:
+        VERTICAL_FIT if aspect_h < aspect_v else HORIZON_FIT
+    elif ft == BEST_FIT:
+        VERTICAL_FIT if aspect_h > aspect_v else HORIZON_FIT
+
+    if ft == HORIZON_FIT or ft == TOSIZE_FIT:
+        h = int(w / aspect_h * aspect_v)
+    elif ft == VERTICAL_FIT or ft == TOSIZE_FIT:
+        w = int(h / aspect_v * aspect_h)
     return (w, h)
 
 

@@ -176,48 +176,68 @@ class MainWindow(QtGui.QMainWindow):
         self.zoom_line = QtGui.QLineEdit("1.0")
         self.zoom_line.setFixedWidth(40)
         reset_button = QtGui.QPushButton("reset")
-        zoom_layout.addWidget(self.zoom_line)
+        self.slider = QtGui.QSlider(QtCore.Qt.Horizontal)
+        self.slider.setMinimum(model.ZOOM_MIN)
+        self.slider.setMaximum(model.ZOOM_MAX)
+        self.slider.setValue(model.ZOOM_DEFAULT)
+        self.slider.setTracking(False)
         zoom_layout.addWidget(reset_button)
+        zoom_layout.addWidget(self.zoom_line)
+        zoom_layout.addWidget(self.slider)
         main_layout.addLayout(zoom_layout)
         ### button layout
         button_layout = QtGui.QHBoxLayout()
-
-        size_1_2 = QtGui.QRadioButton("1/2")
-        size_1_4 = QtGui.QRadioButton("1/4")
-        size_1_8 = QtGui.QRadioButton("1/8")
-        size_1_4.setChecked(True)
-
-        button_layout.addWidget(size_1_2)
-        button_layout.addWidget(size_1_4)
-        button_layout.addWidget(size_1_8)
+        self.size_1_2 = QtGui.QRadioButton("1/2")
+        self.size_1_4 = QtGui.QRadioButton("1/4")
+        self.size_1_8 = QtGui.QRadioButton("1/8")
+        self.size_1_16 = QtGui.QRadioButton("1/16")
+        self.size_1_4.setChecked(True)
+        button_layout.addWidget(self.size_1_2)
+        button_layout.addWidget(self.size_1_4)
+        button_layout.addWidget(self.size_1_8)
+        button_layout.addWidget(self.size_1_16)
         main_layout.addLayout(button_layout)
         ### signal
-        self.zoom_line.textEdited.connect(self.slotZoomChanged)
+        self.zoom_line.editingFinished.connect(self.slotZoomChanged)
         reset_button.clicked.connect(self.reset)
-        size_1_2.clicked.connect(self.toggle_1_2)
-        size_1_8.clicked.connect(self.toggle_1_8)
-        size_1_4.clicked.connect(self.toggle_1_4)
+        self.size_1_2.clicked.connect(self.slotImageSize)
+        self.size_1_4.clicked.connect(self.slotImageSize)
+        self.size_1_8.clicked.connect(self.slotImageSize)
+        self.size_1_16.clicked.connect(self.slotImageSize)
+        self.slider.valueChanged.connect(self.slotSliderChanged)
+        self.slider.sliderMoved.connect(self.slotSliderChanged)
+
+    def slotSliderChanged(self, value):
+        zoom_value = value * 0.01
+        self.zoom_line.setText(str(zoom_value))
+        self.setZoom(zoom_value)
 
     def slotZoomChanged(self):
         txt = self.zoom_line.text()
         if RE_NUMBER.match(txt):
             value = float(txt)
-            value = value if value > 0 else 0.001
-            self.setZoom(value)
-            # a = 100 - value  # b = value / a  # c = a * 0.01
-            # d = b * c  # e = c * 2 # print d + e
+            min_v = model.ZOOM_MIN * 0.01
+            max_v = model.ZOOM_MAX * 0.01
+            value = value if value > min_v else min_v
+            value = value if value < max_v else max_v
+        else:
+            value = 1.0
+        self.slider.setValue(int(value * 100))
 
-    def toggle_1_4(self):
-        model.DRAW_SCALE = 0.25
-
-    def toggle_1_8(self):
-        model.DRAW_SCALE = 0.125
-
-    def toggle_1_2(self):
-        model.DRAW_SCALE = 0.5
+    def slotImageSize(self):
+        if self.size_1_2.isChecked():
+            model.DRAW_SCALE = 0.5
+        elif self.size_1_4.isChecked():
+            model.DRAW_SCALE = 0.25
+        elif self.size_1_8.isChecked():
+            model.DRAW_SCALE = 0.125
+        elif self.size_1_16.isChecked():
+            model.DRAW_SCALE = 0.0625
+        self.reset()
 
     def reset(self):
         self.zoom_line.setText("1.0")
+        self.slider.setValue(model.ZOOM_DEFAULT)
         self.draw_widget.reset()
 
     def setZoom(self, value):
