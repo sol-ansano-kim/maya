@@ -6,7 +6,9 @@ UI = None
 DRAW_SCALE = 0.25
 HORIZON_FIT = 2
 VERTICAL_FIT = 3
-
+ZOOM_MIN = 1
+ZOOM_MAX = 200
+ZOOM_DEFAULT = 100
 
 def isValid():
     if CAMERA and UI:
